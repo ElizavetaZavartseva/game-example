@@ -11,6 +11,7 @@ VEHICLES = {
 
 def get_next_task():
     state = {"task_number": 0}
+    # TODO: fix task number is always 0
 
     state["task_number"] += 1
 
@@ -107,6 +108,9 @@ def play(balance: int, autopark: list[str]):
     current_autopark = copy.deepcopy(autopark)
     time_passed = 0
     tasks_in_progress: list[dict[str, t.Any]] = []
+
+    # TODO: add a chance to buy more vehicles
+
     while True:
         tmp_tasks = []
 
