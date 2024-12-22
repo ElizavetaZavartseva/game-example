@@ -7,6 +7,7 @@ VEHICLES = {
     "Van": 40,
     "Bus": 50,
     "Truck": 80,
+    "miniVAN": 30,
 }
 
 
@@ -38,7 +39,9 @@ def get_next_task(task_number: int) -> dict[str, t.Any]:
         task_size = random.randrange(60)
         task_price = 10*task_size
         task_distance = random.randrange(1000)
-        if task_size <= 20:
+        if task_size <= 10:
+            acceptable_vehicles = ["Van", "Truck", "miniVAN"]
+        elif task_size <= 20:
             acceptable_vehicles = ["Van", "Truck"]
         else:
             acceptable_vehicles = ["Truck"]
@@ -154,15 +157,18 @@ def play(balance: int, autopark: list[str]):
                 task_cost = 6.75 * next_task["task_size"]
             elif chosen_vehicle == "Truck":
                 task_time = next_task["task_distance"] / 80
-                task_cost = 6.75 * next_task["task_size"]
+                task_cost = 5.75 * next_task["task_size"]
             elif chosen_vehicle == "Car":
                 task_time = next_task["task_distance"] / 120
                 task_cost = 1.25 * next_task["task_size"]
             elif chosen_vehicle == "Bus":
                 task_time = next_task["task_distance"] / 80
-                task_cost = 1.25 * next_task["task_size"]
+                task_cost = 3.25 * next_task["task_size"]
+            elif chosen_vehicle == "miniVan":
+                task_time = next_task["task_distance"] / 100
+                task_cost = 4.75 * next_task["task_size"]
             else:
-                raise Exception("shouldn't happen")
+                raise Exception("Vehicle is not defined!")
             next_task["chosen_vehicle"] = chosen_vehicle
             next_task["task_time"] = task_time
             next_task["task_cost"] = task_cost
