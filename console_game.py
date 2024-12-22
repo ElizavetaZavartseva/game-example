@@ -1,59 +1,16 @@
+import copy
 import random
+import typing as t
 
-balance = 100
-autopark = []
-vehicle = {
-                'Car': 20,
-                'Bus': 50,
-                'Truck': 80
-            }
-
-affordable_vehicle = {}
-
-
-greetings = f"Hi there! Now, you are in the game. You have {balance} gold coins and you need to create your own auto-park."
-print(greetings)
-
-vehicle_one = input(f"You can choose your vehicle from this list: {vehicle}")
-
-balance -= vehicle[vehicle_one]
-autopark.append(vehicle_one)
-
-while balance >= min(vehicle.values()):
-    vehicle_new = input(f'Good deal! Now, your balance is {balance} and you own {autopark}. Do you wanna buy something else?')
-    if vehicle_new == 'Yes':
-        vehicle_new = input(f"You can choose your vehicle from this list: {vehicle}")
-        if vehicle[vehicle_new] <= balance:
-            balance -= vehicle[vehicle_new]
-            autopark.append(vehicle_new)
-        else:
-            for k, v in vehicle.items():
-                if vehicle[k] <= balance:
-                    affordable_vehicle[k] = v
-            vehicle_new = input(f"Ops! You don't have enough gold coins. You can not buy {vehicle_new}, but you can choose vehicle from this list {affordable_vehicle}")
-            balance -= vehicle[vehicle_new]
-            autopark.append(vehicle_new)
-    elif vehicle_new != 'Yes' and vehicle_new != 'No':
-        vehicle_new = input(f'Sorry, I can not understand you:( Please enter "Yes" or "No"')
-    else:
-        break
-
-# when I don't have enough money it gives me wrong choice of transport. I have 30 coins, I can buy only car, but it suggests me car and bus.
-
-
-print(f"Congratulations! You built your own auto-park. Your balance is {balance} gold coins. You own {autopark}.")
-
-task_acceptance = input(f"Now, it's time to complete 1st task. Do you want to start?")
-
-
-state = {
-    "task_number": 0,
-    "task_acceptance": ''
+VEHICLES = {
+    "Car": 20,
+    "Bus": 50,
+    "Truck": 80,
 }
 
-state["task_acceptance"] = task_acceptance
 
-def task_creation():
+def get_next_task():
+    state = {"task_number": 0}
 
     state["task_number"] += 1
 
@@ -73,7 +30,7 @@ def task_creation():
         task_size = random.randrange(50)
         task_price = 3*task_size
         task_cost = 1.25*task_size
-        task_distance = random.randrange(3000)
+        task_distance = random.randrange(300)
         if task_size <= 3:
             task_vehicle = 'Car'
             task_time = task_distance / 120
@@ -85,23 +42,124 @@ def task_creation():
         task_size = random.randrange(60)
         task_price = 10*task_size
         task_cost = 6.75 * task_size
-        task_distance = random.randrange(7000)
+        task_distance = random.randrange(1000)
         task_vehicle = 'Truck'
         task_time = task_distance / 100
 
-    task = (f'This is your {task_number} task. You have to deliver {task_size} {task_choice}.'
-            f'You will earn {task_price} gold coins. It will cost {task_cost}. Your profit is {task_price - task_cost} gold coins.'
-            f'You have to use {task_vehicle}, delivery distance is {task_distance} and it will take {task_time} hours.')
-    print(task)
-    task_acceptance = input(f"Do you want to accept this task?")
-    state["task_acceptance"] = task_acceptance
+    current_task = {
+        "task_number": task_number,
+        "task_size": task_size,
+        "task_choice": task_choice,
+        "task_price": task_price,
+        "task_cost": task_cost,
+        "task_vehicle": task_vehicle,
+        "task_distance": task_distance,
+        "task_time": task_time,
+    }
+    return current_task
 
 
-while state["task_acceptance"] == 'Yes':
-    task_creation()
+def init_game(balance: int, autopark: list[str]) -> tuple[int, list[str]]:
+    # init vars
+    curren_balance = balance
+    current_autopark = copy.deepcopy(autopark)
+
+    greetings = (f"Hi there! Now, you are in the game. You have {curren_balance} "
+                 f"gold coins and you need to create your own auto-park.")
+    print(greetings)
+
+    while curren_balance >= min(VEHICLES.values()):
+        vehicle_choice = input(f"You can choose your vehicle from this list: {VEHICLES}")
+
+        if VEHICLES[vehicle_choice] > curren_balance:
+            print("Sorry, too expensive!")
+            affordable_vehicle = {}
+            for k, v in VEHICLES.items():
+                if VEHICLES[k] <= curren_balance:
+                    affordable_vehicle[k] = v
+            print(
+                f"Ops! You don't have enough gold coins. You can not buy {vehicle_new}, "
+                f"but you can choose vehicle from this list {affordable_vehicle}"
+            )
+            continue
+
+        curren_balance -= VEHICLES[vehicle_choice]
+        current_autopark.append(vehicle_choice)
+        vehicle_new = input(
+            f'Good deal! Now, your curren_balance is {curren_balance} and you own {current_autopark}. Do you wanna buy something else?'
+        )
+
+        if vehicle_new == "No":
+            break
+        elif vehicle_new != 'Yes' and vehicle_new != 'No':
+            vehicle_new = input(f'Sorry, I can not understand you:( Please enter "Yes" or "No"')
+        # if yes we loop to the next iteration
+
+    print(f"Congratulations! You built your own auto-park. Your balance is {curren_balance} gold coins. You own {current_autopark}.")
+    # when I don't have enough money it gives me wrong choice of transport. I have 30 coins, I can buy only car, but it suggests me car and bus.
+    
+    return curren_balance, current_autopark
+
+def play(balance: int, autopark: list[str]):
+    # task_acceptance = input(f"Now, it's time to complete 1st task. Do you want to start?")
+    # init vars
+    curren_balance = balance
+    current_autopark = copy.deepcopy(autopark)
+    time_passed = 0
+    tasks_in_progress: list[dict[str, t.Any]] = []
+    while True:
+        tmp_tasks = []
+
+        for task in tasks_in_progress:
+            if task["task_time"] <= time_passed - task["start_time"]:
+                print(f"Congrats! Task is completed! You earned {task["task_price"] - task["task_cost"]} coins")
+                curren_balance += task["task_price"] - task["task_cost"]
+                current_autopark.append(task["task_vehicle"])
+            else:
+                tmp_tasks.append(task)
+
+        tasks_in_progress = copy.deepcopy(tmp_tasks)
+
+        print(f"{len(tasks_in_progress)} tasks are in progress")
+        print(f"Available vehicle are: {current_autopark}. Your balance is {curren_balance}")
+
+        next_task = get_next_task()
+        task = (
+            f'This is your {next_task["task_number"]} task. '
+            f'You have to deliver {next_task["task_size"]} {next_task["task_choice"]}.'
+            f'You will earn {next_task["task_price"]} gold coins. '
+            f'It will cost {next_task["task_cost"]}. '
+            f'Your profit is {next_task["task_price"] - next_task["task_cost"]} gold coins.'
+            f'You have to use {next_task["task_vehicle"]}, '
+            f'delivery distance is {next_task["task_distance"]} and it will take {next_task["task_time"]} hours.'
+        )
+        print(task)
+        task_acceptance = input(f"Do you want to accept this task? (type Exit to stop playing)")
+        if task_acceptance == "Yes":
+            next_task["start_time"] = time_passed
+            if next_task["task_vehicle"] in current_autopark:
+                current_autopark.remove(next_task["task_vehicle"])
+                tasks_in_progress.append(next_task)
+            else:
+                print(f"Sorry, you don't have a necessary vehicle! You need a {next_task['task_vehicle']}")
+        elif task_acceptance == "No":
+            pass
+        elif task_acceptance == "Exit":
+            break
+        else:
+            print("What's that?")
+
+        time_passed += 1
 
 
+def start_game():
+    balance = 100
+    autopark = []
+    balance, autopark = init_game(balance, autopark)
+    play(balance, autopark)
+    print("Goodbye")
 
 
-
+if __name__ == "__main__":
+    start_game()
 
