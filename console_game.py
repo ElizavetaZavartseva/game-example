@@ -9,20 +9,17 @@ VEHICLES = {
 }
 
 
-def get_next_task():
-    state = {"task_number": 0}
-    # TODO: fix task number is always 0
+def get_next_task(task_number: int) -> dict[str, t.Any]:
+    # TODO: change it to generator (later)
 
-    state["task_number"] += 1
-
-    if state["task_number"] == 1:
+    if task_number == 1:
         task_number = '1st'
-    elif state["task_number"] == 2:
+    elif task_number == 2:
         task_number = '2nd'
-    elif state["task_number"] == 3:
+    elif task_number == 3:
         task_number = '3rd'
     else:
-        task_number = str(state["task_number"])+ 'th'
+        task_number = str(task_number)+ 'th'
 
     task_type = ['passengers', 'tons of goods']
     task_choice = random.choice(task_type)
@@ -109,9 +106,12 @@ def play(balance: int, autopark: list[str]):
     time_passed = 0
     tasks_in_progress: list[dict[str, t.Any]] = []
 
+    task_number = 0
+
     # TODO: add a chance to buy more vehicles
 
     while True:
+        task_number += 1
         tmp_tasks = []
 
         for task in tasks_in_progress:
@@ -127,7 +127,8 @@ def play(balance: int, autopark: list[str]):
         print(f"{len(tasks_in_progress)} tasks are in progress")
         print(f"Available vehicle are: {current_autopark}. Your balance is {curren_balance}")
 
-        next_task = get_next_task()
+        next_task = get_next_task(task_number)
+
         task = (
             f'This is your {next_task["task_number"]} task. '
             f'You have to deliver {next_task["task_size"]} {next_task["task_choice"]}.'
