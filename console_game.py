@@ -4,6 +4,7 @@ import typing as t
 
 VEHICLES = {
     "Car": 20,
+    "Van": 40,
     "Bus": 50,
     "Truck": 80,
 }
@@ -41,9 +42,12 @@ def get_next_task(task_number: int) -> dict[str, t.Any]:
         task_price = 10*task_size
         task_cost = 6.75 * task_size
         task_distance = random.randrange(1000)
-        task_vehicle = 'Truck'
-        task_time = task_distance / 100
-
+        if task_size <= 20:
+            task_vehicle = 'Van'
+            task_time = task_distance / 100
+        else:
+            task_vehicle = 'Truck'
+            task_time = task_distance / 100
     current_task = {
         "task_number": task_number,
         "task_size": task_size,
