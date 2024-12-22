@@ -62,10 +62,6 @@ def init_game(balance: int, autopark: list[str]) -> tuple[int, list[str]]:
     curren_balance = balance
     current_autopark = copy.deepcopy(autopark)
 
-    greetings = (f"Hi there! Now, you are in the game. You have {curren_balance} "
-                 f"gold coins and you need to create your own auto-park.")
-    print(greetings)
-
     while curren_balance >= min(VEHICLES.values()):
         vehicle_choice = input(f"You can choose your vehicle from this list: {VEHICLES}")
 
@@ -93,8 +89,6 @@ def init_game(balance: int, autopark: list[str]) -> tuple[int, list[str]]:
             vehicle_new = input(f'Sorry, I can not understand you:( Please enter "Yes" or "No"')
         # if yes we loop to the next iteration
 
-    print(f"Congratulations! You built your own auto-park. Your balance is {curren_balance} gold coins. You own {current_autopark}.")
-    # when I don't have enough money it gives me wrong choice of transport. I have 30 coins, I can buy only car, but it suggests me car and bus.
     
     return curren_balance, current_autopark
 
@@ -126,6 +120,13 @@ def play(balance: int, autopark: list[str]):
 
         print(f"{len(tasks_in_progress)} tasks are in progress")
         print(f"Available vehicle are: {current_autopark}. Your balance is {curren_balance}")
+
+
+
+        if curren_balance >= min(VEHICLES.values()):
+            new_vehicle = input(f"You earned enough money to buy new vehicle. Do you want to buy it?")
+            if new_vehicle == "Yes":
+                curren_balance, current_autopark = init_game(curren_balance, current_autopark)
 
         next_task = get_next_task(task_number)
 
@@ -160,7 +161,15 @@ def play(balance: int, autopark: list[str]):
 def start_game():
     balance = 100
     autopark = []
+
+    greeting = (f"Hi there! Now, you are in the game. You have {balance} "
+                f"gold coins and you need to create your own auto-park.")
+    print(greeting)
+
     balance, autopark = init_game(balance, autopark)
+
+    print(f"Congratulations! You own {autopark}. Your balance is {balance} gold coins.")
+
     play(balance, autopark)
     print("Goodbye")
 
