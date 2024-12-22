@@ -28,35 +28,28 @@ def get_next_task(task_number: int) -> dict[str, t.Any]:
     if task_choice == 'passengers':
         task_size = random.randrange(50)
         task_price = 3*task_size
-        task_cost = 1.25*task_size
         task_distance = random.randrange(300)
         if task_size <= 3:
-            task_vehicle = 'Car'
-            task_time = task_distance / 120
+            acceptable_vehicles = ["Car", "Bus"]
         else:
-            task_vehicle = 'Bus'
-            task_time = task_distance / 80
+            acceptable_vehicles = ["Bus"]
 
     else:
         task_size = random.randrange(60)
         task_price = 10*task_size
-        task_cost = 6.75 * task_size
         task_distance = random.randrange(1000)
         if task_size <= 20:
-            task_vehicle = 'Van'
-            task_time = task_distance / 100
+            acceptable_vehicles = ["Van", "Truck"]
         else:
-            task_vehicle = 'Truck'
-            task_time = task_distance / 100
+            acceptable_vehicles = ["Truck"]
+
     current_task = {
         "task_number": task_number,
         "task_size": task_size,
         "task_choice": task_choice,
         "task_price": task_price,
-        "task_cost": task_cost,
-        "task_vehicle": task_vehicle,
+        "acceptable_vehicles": acceptable_vehicles,
         "task_distance": task_distance,
-        "task_time": task_time,
     }
     return current_task
 
@@ -97,7 +90,6 @@ def init_game(balance: int, autopark: list[str]) -> tuple[int, list[str]]:
     return curren_balance, current_autopark
 
 def play(balance: int, autopark: list[str]):
-    # task_acceptance = input(f"Now, it's time to complete 1st task. Do you want to start?")
     # init vars
     curren_balance = balance
     current_autopark = copy.deepcopy(autopark)
@@ -106,26 +98,22 @@ def play(balance: int, autopark: list[str]):
 
     task_number = 0
 
-    # TODO: add a chance to buy more vehicles
-
     while True:
         task_number += 1
         tmp_tasks = []
 
-        for task in tasks_in_progress:
-            if task["task_time"] <= time_passed - task["start_time"]:
-                print(f"Congrats! Task is completed! You earned {task["task_price"] - task["task_cost"]} coins")
-                curren_balance += task["task_price"] - task["task_cost"]
-                current_autopark.append(task["task_vehicle"])
+        for task_message in tasks_in_progress:
+            if task_message["task_time"] <= time_passed - task_message["start_time"]:
+                print(f"Congrats! Task is completed! You earned {task_message["task_price"] - task_message["task_cost"]} coins")
+                curren_balance += task_message["task_price"] - task_message["task_cost"]
+                current_autopark.append(task_message["chosen_vehicle"])
             else:
-                tmp_tasks.append(task)
+                tmp_tasks.append(task_message)
 
         tasks_in_progress = copy.deepcopy(tmp_tasks)
 
         print(f"{len(tasks_in_progress)} tasks are in progress")
         print(f"Available vehicle are: {current_autopark}. Your balance is {curren_balance}")
-
-
 
         if curren_balance >= min(VEHICLES.values()):
             new_vehicle = input(f"You earned enough money to buy new vehicle. Do you want to buy it?")
@@ -134,24 +122,57 @@ def play(balance: int, autopark: list[str]):
 
         next_task = get_next_task(task_number)
 
-        task = (
+        task_message = (
             f'This is your {next_task["task_number"]} task. '
             f'You have to deliver {next_task["task_size"]} {next_task["task_choice"]}.'
             f'You will earn {next_task["task_price"]} gold coins. '
-            f'It will cost {next_task["task_cost"]}. '
-            f'Your profit is {next_task["task_price"] - next_task["task_cost"]} gold coins.'
-            f'You have to use {next_task["task_vehicle"]}, '
-            f'delivery distance is {next_task["task_distance"]} and it will take {next_task["task_time"]} hours.'
+            f'You have to use one of these: {next_task["acceptable_vehicles"]}, '
+            f'delivery distance is {next_task["task_distance"]}.'
         )
-        print(task)
+        print(task_message)
+
         task_acceptance = input(f"Do you want to accept this task? (type Exit to stop playing)")
         if task_acceptance == "Yes":
+            can_be_completed = False
+            for acc_veh in next_task["acceptable_vehicles"]:
+                if acc_veh in current_autopark:
+                    can_be_completed = True
+                    break
+            if not can_be_completed:
+                print("Sorry, you don't have a necessary vehicle")
+                continue
+
+            while True:
+                chosen_vehicle = input(f"Which vehicle {current_autopark} do you want to use for this task?")
+                if chosen_vehicle in next_task["acceptable_vehicles"]:
+                    break
+                print("Sorry, this vehicle can't be used for this task")
+                
             next_task["start_time"] = time_passed
-            if next_task["task_vehicle"] in current_autopark:
-                current_autopark.remove(next_task["task_vehicle"])
-                tasks_in_progress.append(next_task)
+            if chosen_vehicle == "Van":
+                task_time = next_task["task_distance"] / 110
+                task_cost = 6.75 * next_task["task_size"]
+            elif chosen_vehicle == "Truck":
+                task_time = next_task["task_distance"] / 80
+                task_cost = 6.75 * next_task["task_size"]
+            elif chosen_vehicle == "Car":
+                task_time = next_task["task_distance"] / 120
+                task_cost = 1.25 * next_task["task_size"]
+            elif chosen_vehicle == "Bus":
+                task_time = next_task["task_distance"] / 80
+                task_cost = 1.25 * next_task["task_size"]
             else:
-                print(f"Sorry, you don't have a necessary vehicle! You need a {next_task['task_vehicle']}")
+                raise Exception("shouldn't happen")
+            next_task["chosen_vehicle"] = chosen_vehicle
+            next_task["task_time"] = task_time
+            next_task["task_cost"] = task_cost
+            print(f"It will take {next_task["task_time"]} hours."
+                  f'It will cost {next_task["task_cost"]}. '
+                  f'Your profit is {next_task["task_price"] - next_task["task_cost"]} gold coins.'
+                  )
+
+            current_autopark.remove(next_task["chosen_vehicle"])
+            tasks_in_progress.append(next_task)
         elif task_acceptance == "No":
             pass
         elif task_acceptance == "Exit":
